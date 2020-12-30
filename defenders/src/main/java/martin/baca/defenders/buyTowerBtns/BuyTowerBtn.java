@@ -1,7 +1,11 @@
-package martin.baca.defenders;
+package martin.baca.defenders.buyTowerBtns;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 
 import sk.upjs.jpaz2.ImageShape;
 import sk.upjs.jpaz2.Pane;
@@ -11,7 +15,7 @@ import sk.upjs.jpaz2.theater.Stage;
 /**
  * A create tower button displayed on the game scene.
  */
-public class CreateTowerButton extends Pane {
+public class BuyTowerBtn extends Pane {
 	/**
 	 * The stage.
 	 */
@@ -19,35 +23,21 @@ public class CreateTowerButton extends Pane {
 
 	public boolean isClicked = false;
 	public boolean createTower = false;
-	
+
 	/**
 	 * Constructs a create tower button.
 	 * 
 	 * @param game the game.
 	 */
-	public CreateTowerButton(Stage stage) {
+	public BuyTowerBtn(Stage stage) {
 		super(70, 70);
-		this.stage = stage;
-
-		setBorderWidth(1);
-		setBorderColor(Color.black);
-//		setTransparentBackground(true);
-		setBackgroundColor(Color.black);
-
-		// paint button image
-		Turtle painter = new Turtle();
-		painter.setShape(new ImageShape("tower", "tower-70x70.png"));
-		add(painter);
-		painter.center();
-		painter.stamp();
-		remove(painter);
 	}
-	
+
 	@Override
 	protected boolean onCanClick(int x, int y) {
 		return true;
 	}
-	
+
 	@Override
 	protected void onMouseClicked(int x, int y, MouseEvent detail) {
 		createTower = true;
