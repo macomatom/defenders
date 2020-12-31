@@ -10,17 +10,19 @@ import sk.upjs.jpaz2.theater.Stage;
 
 public class BuyTowerBtn extends Pane {
 
-	public boolean isClicked = false;
-	public boolean createTower = false;
+	private boolean isClicked = false;
+	private boolean createTower = false;
 
-	
+	private Stage stage;
 	/**
 	 * Constructs a create tower button.
 	 * 
 	 * @param game the game.
 	 */
-	public BuyTowerBtn(ImageShape towerThumbnail, int price) {
+	public BuyTowerBtn(Stage stage, ImageShape towerThumbnail, int price) {
 		super(70,70);
+		
+		this.stage = stage;
 		
 		setBorderWidth(1);
 		setBorderColor(Color.black);
@@ -61,4 +63,22 @@ public class BuyTowerBtn extends Pane {
 	protected void onMouseClicked(int x, int y, MouseEvent detail) {
 		createTower = true;
 	}
+
+	public boolean isClicked() {
+		return isClicked;
+	}
+
+	public void setClicked(boolean isClicked) {
+		this.isClicked = isClicked;
+	}
+
+	public boolean isCreateTower() {
+		return createTower;
+	}
+
+	public void setCreateTower(boolean createTower) {
+		this.createTower = createTower;
+	}
+	
+	
 }

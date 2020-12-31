@@ -8,18 +8,20 @@ import sk.upjs.jpaz2.ImageShape;
 import sk.upjs.jpaz2.Pane;
 import sk.upjs.jpaz2.Turtle;
 
-public class QuitBtn extends Pane {
-
+public class InfoBtn extends Pane {
+	
 	private Turtle icon;
+	
+	private boolean isClicked;
 
-	public QuitBtn() {
-		super(35,36);
+	public InfoBtn() {
+		super(40,40);
 
 		setTransparentBackground(true);
 		setBorderWidth(0);
 
 		icon = new Turtle();
-		icon.setShape(new ImageShape("menu_buttons", "quit.png"));
+		icon.setShape(new ImageShape("menu_buttons", "info.png"));
 		add(icon);
 		icon.center();
 	}
@@ -31,10 +33,16 @@ public class QuitBtn extends Pane {
 
 	@Override
 	protected void onMouseClicked(int x, int y, MouseEvent detail) {
-		int n = JOptionPane.showConfirmDialog(null, "Do you want to quit?", "Quit",
-				JOptionPane.YES_NO_OPTION);
-		if (n == 0) {
-			System.exit(0);
-		}	
+		isClicked = true;
 	}
+
+	public boolean isClicked() {
+		return isClicked;
+	}
+
+	public void setClicked(boolean isClicked) {
+		this.isClicked = isClicked;
+	}
+	
+	
 }

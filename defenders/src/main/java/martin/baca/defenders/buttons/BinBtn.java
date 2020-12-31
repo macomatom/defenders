@@ -3,39 +3,63 @@ package martin.baca.defenders.buttons;
 import java.awt.Color;
 import java.awt.event.MouseEvent;
 
-import sk.upjs.jpaz2.ImageShape;
-import sk.upjs.jpaz2.Pane;
-import sk.upjs.jpaz2.Turtle;
+import sk.upjs.jpaz2.*;
+import sk.upjs.jpaz2.theater.*;
 
 public class BinBtn extends Pane {
-	
-	public boolean isClicked = false;
 
-	public BinBtn(boolean isActive) {
-		super(50,50);
+	private Turtle icon;
+
+	public boolean isActive;
+	
+	private boolean isClicked;
+
+	public BinBtn(Stage stage) {
+		super(50, 50);
+
+		isActive = false;
+		isClicked = false;
 		
 		setBorderWidth(0);
 		setTransparentBackground(true);
-		
-		Turtle painter = new Turtle();
-		add(painter);
+
+		icon = new Turtle();
+		icon.setShape(new ImageShape("bin", "bin-inactive45x45.png"));
+		add(icon);
+		icon.center();
+	}
+	
+	public void updateView(boolean isActive) {
 		if (isActive) {
-			painter.setShape(new ImageShape("bin", "bin-active45x45.png"));
+			icon.setShape(new ImageShape("bin", "bin-active45x45.png"));
 		} else {
-			painter.setShape(new ImageShape("bin", "bin-inactive45x45.png"));
+			icon.setShape(new ImageShape("bin", "bin-inactive45x45.png"));
 		}
-		painter.setPosition(25, 25);
-		painter.stamp();
-		remove(painter);
+	}
+
+	@Override
+	protected void onMouseClicked(int x, int y, MouseEvent detail) {
+		isClicked = true;
 	}
 	
 	@Override
 	protected boolean onCanClick(int x, int y) {
-		return true;
+		return icon.containsInShape(x, y);
 	}
-	
-	@Override
-	protected void onMouseClicked(int x, int y, MouseEvent detail) {
-		isClicked = true;
+
+	public boolean isActive() {
+		return isActive;
+	}
+
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
+	}
+
+	public boolean isClicked() {
+		return isClicked;
+	}
+
+	public void setClicked(boolean isClicked) {
+		this.isClicked = isClicked;
 	}
 }

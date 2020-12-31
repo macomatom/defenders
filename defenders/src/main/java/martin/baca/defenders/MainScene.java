@@ -6,10 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
-import martin.baca.defenders.buttons.BinBtn;
-import martin.baca.defenders.buttons.BuyTowerBtn;
-import martin.baca.defenders.buttons.MusicSwitchBtn;
-import martin.baca.defenders.buttons.QuitBtn;
+import martin.baca.defenders.buttons.*;
 import martin.baca.defenders.enemies.*;
 import martin.baca.defenders.towers.*;
 import sk.upjs.jpaz2.*;
@@ -19,6 +16,8 @@ import sk.upjs.jpaz2.theater.*;
  * The scene with main content.
  */
 public class MainScene extends Scene {
+
+	private Stage stage;
 
 	/**
 	 * Identifier (name) of this scene.
@@ -43,12 +42,11 @@ public class MainScene extends Scene {
 	/**
 	 * List of towers
 	 */
-	private Map<Tower, Integer> towerMap;
+	private Map<Tower, Integer> towerListMap;
 
 	/**
 	 * List of tower menu buttons
 	 */
-//	private List<PurchaseTowerButton> towerButtons;
 	private List<BuyTowerBtn> buyTowerBtns;
 
 	/**
@@ -79,9 +77,16 @@ public class MainScene extends Scene {
 	/**
 	 * menu buttons
 	 */
-	private QuitBtn quitBtn;
 	
+	private InfoBtn infoBtn;
+	
+	private QuitBtn quitBtn;
+
 	private MusicSwitchBtn musicSwitchBtn;
+	
+	private PauseBtn pauseBtn;
+
+	private InfoMenu infoMenu;
 
 	/**
 	 * Constructs the scene.
@@ -91,10 +96,12 @@ public class MainScene extends Scene {
 	public MainScene(Stage stage) {
 		super(stage);
 
+		this.stage = stage;
+
 		// initialization of lists
 		enemyList = new ArrayList<>();
 		coordinatesList = new ArrayList<>();
-		towerMap = new HashMap<>();
+		towerListMap = new HashMap<>();
 		buyTowerBtns = new ArrayList<>();
 		towerSpots = new HashMap<>();
 		currentTower = new Tower();
@@ -105,6 +112,10 @@ public class MainScene extends Scene {
 		// loads enemie's movement directions (coordinates) from file
 		initializeCoordList();
 
+		prepareScreen();
+	}
+
+	public void prepareScreen() {
 		// creating a background
 		createBackground();
 
@@ -157,18 +168,25 @@ public class MainScene extends Scene {
 
 		// create bin button in lower right corner
 		createBinButtonBox();
-		createBinButton(false);
+		createBinButton();
 	}
 
 	public void createTopRightMenu() {
 		// create and place menu box
 		createTopMenuBox();
-		
+
 		// create and place quit button
 		createQuitButton();
-		
+
 		// create and place music switch button
-		createMusicSwitchButton(true);
+		createMusicSwitchButton();
+		
+		createInfoButton();
+		
+		createPauseButton();
+		
+		infoMenu = new InfoMenu();
+		infoMenu.setPosition(0, 0);
 	}
 
 	public void createBuyTowerMenuBox() {
@@ -193,7 +211,7 @@ public class MainScene extends Scene {
 
 	public void createBuyTowerBtns() {
 		for (int i = 0; i < 3; i++) {
-			BuyTowerBtn btn = new BuyTowerBtn(new ImageShape("towers", "tower" + (i + 1) + "-70x70.png"),
+			BuyTowerBtn btn = new BuyTowerBtn(stage, new ImageShape("towers", "tower" + (i + 1) + "-70x70.png"),
 					(i + 1) * 100);
 
 			btn.setPosition(928, 287 + 72 * i);
@@ -210,27 +228,35 @@ public class MainScene extends Scene {
 		add(binButtonBox);
 	}
 
-	public void createBinButton(boolean isActive) {
-		binButton = new BinBtn(isActive);
+	public void createBinButton() {
+		binButton = new BinBtn(stage);
 		binButton.setPosition(938, 516);
 		add(binButton);
 	}
-	
+
 	public void createQuitButton() {
 		quitBtn = new QuitBtn();
-		quitBtn.setPosition(950, 0);
+		quitBtn.setPosition(957.5, 7);
 		add(quitBtn);
 	}
-	
-	public void createMusicSwitchButton(boolean isActive) {
-		if (musicSwitchBtn != null) {
-			remove(musicSwitchBtn);
-		}
-		musicSwitchBtn = new MusicSwitchBtn(isActive);
-		musicSwitchBtn.setPosition(900, 0);
+
+	public void createMusicSwitchButton() {
+		musicSwitchBtn = new MusicSwitchBtn(stage);
+		musicSwitchBtn.setPosition(907.5, 10);
 		add(musicSwitchBtn);
 	}
 	
+	public void createInfoButton() {
+		infoBtn = new InfoBtn();
+		infoBtn.setPosition(855, 5);
+		add(infoBtn);
+	}
+	
+	public void createPauseButton() {
+		pauseBtn = new PauseBtn();
+		pauseBtn.setPosition(805, 5);
+		add(pauseBtn);
+	}
 
 	@Override
 	public void start() {
@@ -249,9 +275,9 @@ public class MainScene extends Scene {
 		// update scene
 
 		// every enemy makes one step
-//		for (int i = 0; i < enemyList.size(); i++) {
-//			moveEnemy(i);
-//		}
+		for (int i = 0; i < enemyList.size(); i++) {
+			moveEnemy(i);
+		}
 
 		// every 25 ticks new enemy is created
 		if (tickCounter % 25 == 0) {
@@ -289,13 +315,13 @@ public class MainScene extends Scene {
 	}
 
 	public void createTower(double x, double y) {
-		if (buyTowerBtns.get(0).createTower) {
+		if (buyTowerBtns.get(0).isCreateTower()) {
 			currentTower = new Tower1();
 		}
-		if (buyTowerBtns.get(1).createTower) {
+		if (buyTowerBtns.get(1).isCreateTower()) {
 			currentTower = new Tower2();
 		}
-		if (buyTowerBtns.get(2).createTower) {
+		if (buyTowerBtns.get(2).isCreateTower()) {
 			currentTower = new Tower3();
 		}
 		add(currentTower);
@@ -323,56 +349,67 @@ public class MainScene extends Scene {
 
 	@Override
 	protected void onMouseClicked(int x, int y, MouseEvent detail) {
+		if (infoMenu.isDisplayed()) {
+			remove(infoMenu);
+			infoMenu.setDisplayed(false);
+			start();
+			return;
+		}
 		// places tower to current cursor position
 		for (int i = 0; i < buyTowerBtns.size(); i++) {
-			if (buyTowerBtns.get(i).isClicked && placeTower(x, y)) {
-				buyTowerBtns.get(i).isClicked = false;
-				towerMap.put(currentTower, i + 1);
+			if (buyTowerBtns.get(i).isClicked() && placeTower(x, y)) {
+				buyTowerBtns.get(i).setClicked(false);
+				towerListMap.put(currentTower, i + 1);
 				currentTower = new Tower();
-				createBinButton(false);
+				binButton.updateView(false);
 			}
 		}
 
 		// creates tower immediately after createTowerButton is clicked
 		for (int i = 0; i < buyTowerBtns.size(); i++) {
-			if (buyTowerBtns.get(i).createTower) {
+			if (buyTowerBtns.get(i).isCreateTower()) {
 				if (currentTower != null) {
 					remove(currentTower);
 					currentTower = new Tower();
 				}
-				createBinButton(true);
+				binButton.updateView(true);
 				createTower(x, y);
-				buyTowerBtns.get(i).createTower = false;
-				buyTowerBtns.get(i).isClicked = true;
+				buyTowerBtns.get(i).setCreateTower(false);
+				buyTowerBtns.get(i).setClicked(true);
 
 			}
 		}
 
-		if (binButton.isClicked) {
+		if (binButton.isClicked()) {
 			remove(currentTower);
 			currentTower = new Tower();
-			binButton.isClicked = false;
-			createBinButton(false);
+			binButton.setClicked(false);
+			binButton.updateView(false);
 		}
 
-		if (quitBtn.isClicked) {
-			System.exit(0);
+		
+		
+		if (infoBtn.isClicked()) {
+			add(infoMenu);
+			infoMenu.setDisplayed(true);
+			System.out.println(infoMenu.isDisplayed());
+			infoBtn.setClicked(false);
+			this.bringToFront(infoMenu);
+			stop();
 		}
 		
-		if (musicSwitchBtn.isClicked) {
-			System.out.println("Nieco krajsie");
-			System.out.println(musicSwitchBtn.isActive);
-			if (musicSwitchBtn.isActive) {
-				createMusicSwitchButton(false);
-				musicSwitchBtn.isActive = false;
+		if (pauseBtn.isClicked()) {
+			if (pauseBtn.isPaused()) {
+				pauseBtn.setClicked(false);
+				pauseBtn.setPaused(false);
+				start();
 			} else {
-				createMusicSwitchButton(true);
-				musicSwitchBtn.isActive = true;
-			}
-			musicSwitchBtn.isClicked = false;
-			
+				pauseBtn.setClicked(false);
+				pauseBtn.setPaused(true);
+				stop();
+			}	
 		}
-
+		
 		System.out.println(x + ", " + y);
 	}
 
@@ -383,7 +420,7 @@ public class MainScene extends Scene {
 	protected void onMouseMoved(int x, int y, MouseEvent detail) {
 
 		for (int i = 0; i < buyTowerBtns.size(); i++) {
-			if (buyTowerBtns.get(i).isClicked) {
+			if (buyTowerBtns.get(i).isClicked()) {
 				currentTower.setPosition(x + currentTower.getDx(), y + currentTower.getDy());
 			}
 		}
