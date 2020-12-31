@@ -6,7 +6,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
-import martin.baca.defenders.buyTowerBtns.*;
+import martin.baca.defenders.buttons.BinBtn;
+import martin.baca.defenders.buttons.BuyTowerBtn;
+import martin.baca.defenders.buttons.MusicSwitchBtn;
+import martin.baca.defenders.buttons.QuitBtn;
 import martin.baca.defenders.enemies.*;
 import martin.baca.defenders.towers.*;
 import sk.upjs.jpaz2.*;
@@ -40,15 +43,13 @@ public class MainScene extends Scene {
 	/**
 	 * List of towers
 	 */
-	private List<Tower> towerList;
+	private Map<Tower, Integer> towerMap;
 
 	/**
 	 * List of tower menu buttons
 	 */
 //	private List<PurchaseTowerButton> towerButtons;
-	private BuyTower1Btn purchaseTower1Button;
-	private BuyTower2Btn purchaseTower2Button;
-	private BuyTower3Btn purchaseTower3Button;
+	private List<BuyTowerBtn> buyTowerBtns;
 
 	/**
 	 * List of spots where towers could be placed
@@ -63,12 +64,24 @@ public class MainScene extends Scene {
 	/**
 	 * skips steps
 	 */
-//	private int STEP_SKIP = 3;
+//	private int ENEMY_SPEED = 3;
 
 	/**
 	 * creates new instance when new tower is purchased
 	 */
 	private Tower currentTower;
+
+	/**
+	 * bin to discard tower
+	 */
+	private BinBtn binButton;
+
+	/**
+	 * menu buttons
+	 */
+	private QuitBtn quitBtn;
+	
+	private MusicSwitchBtn musicSwitchBtn;
 
 	/**
 	 * Constructs the scene.
@@ -81,30 +94,40 @@ public class MainScene extends Scene {
 		// initialization of lists
 		enemyList = new ArrayList<>();
 		coordinatesList = new ArrayList<>();
-		towerList = new ArrayList<>();
-//		towerButtons = new ArrayList<>();
+		towerMap = new HashMap<>();
+		buyTowerBtns = new ArrayList<>();
 		towerSpots = new HashMap<>();
+		currentTower = new Tower();
+
+		// initializes tower spots (positions)
+		initializeTowerSpots();
+
+		// loads enemie's movement directions (coordinates) from file
+		initializeCoordList();
 
 		// creating a background
 		createBackground();
 
-		// create and place menu box
-		createMenuBox();
+		// creates menu for buying towers
+		createRightHandSideMenu();
 
-		// create and place create tower buttons
-		purchaseTower1Button = new BuyTower1Btn(stage);
-		purchaseTower1Button.setPosition(928, 302);
-		add(purchaseTower1Button);
+		// creates top right menu
+		createTopRightMenu();
+	}
 
-		purchaseTower2Button = new BuyTower2Btn(stage);
-		purchaseTower2Button.setPosition(928, 374);
-		add(purchaseTower2Button);
+	public void initializeTowerSpots() {
+		towerSpots.put(new TowerSpot(82, 110), false);
+		towerSpots.put(new TowerSpot(400, 150), false);
+		towerSpots.put(new TowerSpot(605, 134), false);
+		towerSpots.put(new TowerSpot(519, 321), false);
+		towerSpots.put(new TowerSpot(791, 150), false);
+		towerSpots.put(new TowerSpot(767, 322), false);
+		towerSpots.put(new TowerSpot(661, 488), false);
+		towerSpots.put(new TowerSpot(356, 532), false);
+		towerSpots.put(new TowerSpot(172, 379), false);
+	}
 
-		purchaseTower3Button = new BuyTower3Btn(stage);
-		purchaseTower3Button.setPosition(928, 446);
-		add(purchaseTower3Button);
-
-		// loads enemie's movement directions (coordinates) from file
+	public void initializeCoordList() {
 		try (Scanner sc = new Scanner(new File("enemies_path_coordinates.txt"))) {
 			while (sc.hasNextLine()) {
 				coordinatesList.add(sc.next());
@@ -113,10 +136,101 @@ public class MainScene extends Scene {
 		} catch (FileNotFoundException e1) {
 			System.err.println("File \"enemies_path_coordinates.txt\" is missing.");
 		}
-
-		// initializes tower spots (positions)
-		initializeTowerSpots();
 	}
+
+	// creates background (with turtle image shape)
+	public void createBackground() {
+		Turtle painter = new Turtle();
+		painter.setShape(new ImageShape("backgrounds", "background-1000x581.png"));
+		add(painter);
+		painter.center();
+		painter.stamp();
+		remove(painter);
+	}
+
+	public void createRightHandSideMenu() {
+		// create and place menu box
+		createBuyTowerMenuBox();
+
+		// create buyTowerBtns
+		createBuyTowerBtns();
+
+		// create bin button in lower right corner
+		createBinButtonBox();
+		createBinButton(false);
+	}
+
+	public void createTopRightMenu() {
+		// create and place menu box
+		createTopMenuBox();
+		
+		// create and place quit button
+		createQuitButton();
+		
+		// create and place music switch button
+		createMusicSwitchButton(true);
+	}
+
+	public void createBuyTowerMenuBox() {
+		Pane menuBox = new Pane(74, 218);
+		menuBox.setBorderWidth(0);
+		menuBox.setTransparentBackground(false);
+		setBackgroundColor(Color.lightGray);
+
+		menuBox.setPosition(926, 285);
+		add(menuBox);
+	}
+
+	public void createTopMenuBox() {
+		Pane menuBox = new Pane(250, 50);
+		menuBox.setBorderWidth(0);
+		menuBox.setTransparentBackground(false);
+		menuBox.setBackgroundColor(new Color(100, 100, 100, 200));
+
+		menuBox.setPosition(750, 0);
+		add(menuBox);
+	}
+
+	public void createBuyTowerBtns() {
+		for (int i = 0; i < 3; i++) {
+			BuyTowerBtn btn = new BuyTowerBtn(new ImageShape("towers", "tower" + (i + 1) + "-70x70.png"),
+					(i + 1) * 100);
+
+			btn.setPosition(928, 287 + 72 * i);
+			add(btn);
+			buyTowerBtns.add(btn);
+		}
+	}
+
+	public void createBinButtonBox() {
+		Pane binButtonBox = new Pane(74, 80);
+		binButtonBox.setBorderWidth(0);
+		binButtonBox.setBackgroundColor(new Color(116, 77, 33, 150));
+		binButtonBox.setPosition(926, 504);
+		add(binButtonBox);
+	}
+
+	public void createBinButton(boolean isActive) {
+		binButton = new BinBtn(isActive);
+		binButton.setPosition(938, 516);
+		add(binButton);
+	}
+	
+	public void createQuitButton() {
+		quitBtn = new QuitBtn();
+		quitBtn.setPosition(950, 0);
+		add(quitBtn);
+	}
+	
+	public void createMusicSwitchButton(boolean isActive) {
+		if (musicSwitchBtn != null) {
+			remove(musicSwitchBtn);
+		}
+		musicSwitchBtn = new MusicSwitchBtn(isActive);
+		musicSwitchBtn.setPosition(900, 0);
+		add(musicSwitchBtn);
+	}
+	
 
 	@Override
 	public void start() {
@@ -131,119 +245,19 @@ public class MainScene extends Scene {
 	}
 
 	@Override
-	protected void onMouseClicked(int x, int y, MouseEvent detail) {
-
-		// Button 1
-		// places tower to current cursor position
-		if (purchaseTower1Button.isClicked && placeTower(x, y)) {
-			purchaseTower1Button.isClicked = false;
-			towerList.add(currentTower);
-			currentTower = null;
-		}
-
-		// creates tower immediately after createTowerButton is clicked
-		if (purchaseTower1Button.createTower) {
-			createTower(x + 5, y - 40);
-			purchaseTower1Button.createTower = false;
-			purchaseTower1Button.isClicked = true;
-		}
-
-		// Button 2
-		// places tower to current cursor position
-		if (purchaseTower2Button.isClicked && placeTower(x, y)) {
-			purchaseTower2Button.isClicked = false;
-			towerList.add(currentTower);
-			currentTower = null;
-		}
-
-		// creates tower immediately after createTowerButton is clicked
-		if (purchaseTower2Button.createTower) {
-			createTower(x, y - 37);
-			purchaseTower2Button.createTower = false;
-			purchaseTower2Button.isClicked = true;
-		}
-
-		// Button 3
-		// places tower to current cursor position
-		if (purchaseTower3Button.isClicked && placeTower(x, y)) {
-			purchaseTower3Button.isClicked = false;
-			towerList.add(currentTower);
-			currentTower = null;
-		}
-
-		// creates tower immediately after createTowerButton is clicked
-		if (purchaseTower3Button.createTower) {
-			createTower(x + 5, y - 40);
-			purchaseTower3Button.createTower = false;
-			purchaseTower3Button.isClicked = true;
-		}
-		System.out.println(x + ", " + y);
-	}
-
-	/**
-	 * changes tower coordinates to current cursor position
-	 */
-	@Override
-	protected void onMouseMoved(int x, int y, MouseEvent detail) {
-		if (purchaseTower1Button.isClicked) {
-			currentTower.setPosition(x + 5, y - 40);
-		}
-
-		if (purchaseTower2Button.isClicked) {
-			currentTower.setPosition(x, y - 37);
-		}
-		
-		if (purchaseTower3Button.isClicked) {
-			currentTower.setPosition(x, y - 37);
-		}
-	}
-
-	@Override
 	protected void onTick() {
 		// update scene
 
 		// every enemy makes one step
-		for (int i = 0; i < enemyList.size(); i++) {
-			moveEnemy(i);
-		}
+//		for (int i = 0; i < enemyList.size(); i++) {
+//			moveEnemy(i);
+//		}
 
 		// every 25 ticks new enemy is created
 		if (tickCounter % 25 == 0) {
 			createEnemy();
 		}
 		tickCounter++;
-	}
-
-	// creates background (with turtle image shape)
-	public void createBackground() {
-		Turtle painter = new Turtle();
-		painter.setShape(new ImageShape("backgrounds", "background-1000x581.png"));
-		add(painter);
-		painter.center();
-		painter.stamp();
-		remove(painter);
-	}
-
-	public void createMenuBox() {
-		Pane menuBox = new Pane(74, 218);
-		menuBox.setBorderWidth(0);
-		menuBox.setTransparentBackground(false);
-		setBackgroundColor(Color.lightGray);
-
-		menuBox.setPosition(926, 300);
-		add(menuBox);
-	}
-
-	public void initializeTowerSpots() {
-		towerSpots.put(new TowerSpot(82, 110), false);
-		towerSpots.put(new TowerSpot(400, 150), false);
-		towerSpots.put(new TowerSpot(605, 134), false);
-		towerSpots.put(new TowerSpot(791, 150), false);
-		towerSpots.put(new TowerSpot(791, 150), false);
-		towerSpots.put(new TowerSpot(767, 322), false);
-		towerSpots.put(new TowerSpot(661, 488), false);
-		towerSpots.put(new TowerSpot(356, 532), false);
-		towerSpots.put(new TowerSpot(172, 379), false);
 	}
 
 	// creates new enemy, adds him to list, sets up his shape and sets a position
@@ -275,34 +289,103 @@ public class MainScene extends Scene {
 	}
 
 	public void createTower(double x, double y) {
-		if (purchaseTower1Button.createTower) {
+		if (buyTowerBtns.get(0).createTower) {
 			currentTower = new Tower1();
-		} else if (purchaseTower2Button.createTower) {
-			currentTower = new Tower2();
-		} else if (purchaseTower3Button.createTower) {
-			currentTower = new Tower3(); 
 		}
-
+		if (buyTowerBtns.get(1).createTower) {
+			currentTower = new Tower2();
+		}
+		if (buyTowerBtns.get(2).createTower) {
+			currentTower = new Tower3();
+		}
 		add(currentTower);
-		currentTower.setPosition(x, y);
+		currentTower.setPosition(x + currentTower.getDx(), y + currentTower.getDy());
 	}
 
+	/**
+	 * checks if any of towerSpots was clicked if was, then places tower to spot
+	 * 
+	 * @param x
+	 * @param y
+	 * @return
+	 */
 	public boolean placeTower(double x, double y) {
-		// checks if any of towerSpots was clicked
+
 		for (TowerSpot ts : towerSpots.keySet()) {
 			if (ts.checkTowerSpot(x, y) && !towerSpots.get(ts)) {
-				if (currentTower instanceof Tower1) {
-					currentTower.setPosition(ts.getX() + 5, ts.getY() - 40);
-				} else if (currentTower instanceof Tower2) {
-					currentTower.setPosition(ts.getX(), ts.getY() - 37);
-				} else if (currentTower instanceof Tower3) {
-					currentTower.setPosition(ts.getX(), ts.getY() - 37);
-				}
-
+				currentTower.setPosition(ts.getX() + currentTower.getDx(), ts.getY() + currentTower.getDy());
 				towerSpots.put(ts, true);
 				return true;
 			}
 		}
 		return false;
+	}
+
+	@Override
+	protected void onMouseClicked(int x, int y, MouseEvent detail) {
+		// places tower to current cursor position
+		for (int i = 0; i < buyTowerBtns.size(); i++) {
+			if (buyTowerBtns.get(i).isClicked && placeTower(x, y)) {
+				buyTowerBtns.get(i).isClicked = false;
+				towerMap.put(currentTower, i + 1);
+				currentTower = new Tower();
+				createBinButton(false);
+			}
+		}
+
+		// creates tower immediately after createTowerButton is clicked
+		for (int i = 0; i < buyTowerBtns.size(); i++) {
+			if (buyTowerBtns.get(i).createTower) {
+				if (currentTower != null) {
+					remove(currentTower);
+					currentTower = new Tower();
+				}
+				createBinButton(true);
+				createTower(x, y);
+				buyTowerBtns.get(i).createTower = false;
+				buyTowerBtns.get(i).isClicked = true;
+
+			}
+		}
+
+		if (binButton.isClicked) {
+			remove(currentTower);
+			currentTower = new Tower();
+			binButton.isClicked = false;
+			createBinButton(false);
+		}
+
+		if (quitBtn.isClicked) {
+			System.exit(0);
+		}
+		
+		if (musicSwitchBtn.isClicked) {
+			System.out.println("Nieco krajsie");
+			System.out.println(musicSwitchBtn.isActive);
+			if (musicSwitchBtn.isActive) {
+				createMusicSwitchButton(false);
+				musicSwitchBtn.isActive = false;
+			} else {
+				createMusicSwitchButton(true);
+				musicSwitchBtn.isActive = true;
+			}
+			musicSwitchBtn.isClicked = false;
+			
+		}
+
+		System.out.println(x + ", " + y);
+	}
+
+	/**
+	 * changes tower coordinates to current cursor position
+	 */
+	@Override
+	protected void onMouseMoved(int x, int y, MouseEvent detail) {
+
+		for (int i = 0; i < buyTowerBtns.size(); i++) {
+			if (buyTowerBtns.get(i).isClicked) {
+				currentTower.setPosition(x + currentTower.getDx(), y + currentTower.getDy());
+			}
+		}
 	}
 }
